@@ -431,7 +431,7 @@ function loadSettingsFromSheet(cb){
     .then(function(r){return r.json();})
     .then(function(res){
       if(res.result==='success'&&res.payload&&res.payload!=='{}'){
-        var s=JSON.parse(res.payload);
+        var s=(typeof res.payload==='string')?JSON.parse(res.payload):res.payload;
         if(s.cfg){
           var savedDisc=Object.assign({},s.cfg.disc||{});
           delete savedDisc.rackets; // 카테고리 라켓 할인 제거
