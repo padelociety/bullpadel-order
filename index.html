@@ -263,8 +263,6 @@ main{max-width:1200px;margin:0 auto;padding:32px 24px;}
           <div class="atab" onclick="showAtab('visibility',this)">상품 노출 관리</div>
           <div class="atab" onclick="showAtab('images',this)">이미지 URL 관리</div>
           <div class="atab" onclick="showAtab('names',this)">상품명 수정</div>
-          <div class="atab" onclick="showAtab('itemdisc',this)">상품별 할인율</div>
-          
           <div class="atab" onclick="showAtab('general',this)">기타</div>
         </div>
 
@@ -358,26 +356,6 @@ main{max-width:1200px;margin:0 auto;padding:32px 24px;}
           </div>
         </div>
 
-        <!-- 상품별 할인율 패널 -->
-        <div class="apanel" id="apanel-itemdisc">
-          <div class="asec">
-            <div class="asec-t">상품별 할인율</div>
-            <div style="font-size:11px;color:var(--dim);margin-bottom:12px">카테고리 할인율보다 우선 적용됩니다. 0이면 카테고리 할인율 사용.</div>
-            <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
-              <input id="discSearch" class="ftxt" style="flex:1;min-width:180px" placeholder="제품명 또는 REF 검색..." oninput="renderDiscList()">
-              <select id="discCatFilter" class="ftxt" style="width:140px" onchange="renderDiscList()">
-                <option value="all">전체</option>
-                <option value="rackets">라켓</option>
-                <option value="bags">가방</option>
-                <option value="shoes">신발</option>
-                <option value="accessories">액세서리</option>
-                <option value="textile">의류</option>
-              </select>
-              <button class="save-btn" style="padding:6px 14px;font-size:11px" onclick="saveAllDiscounts()">💾 저장</button>
-            </div>
-            <div id="discList" style="display:flex;flex-direction:column;gap:4px;max-height:60vh;overflow-y:auto"></div>
-          </div>
-        </div>
 
         <button class="save-btn" style="margin-top:8px" onclick="saveAll()">💾 저장 및 적용</button>
       </div>
@@ -425,14 +403,6 @@ function loadSettingsFromSheet(cb){
         if(s.hidden) _hiddenCache=s.hidden;
         if(s.imgOverrides) _imgOverrideCache=s.imgOverrides;
         if(s.nameOverrides) _nameOverrideCache=s.nameOverrides;
-        // 상품별 할인율 복원
-        if(s.discOverrides){
-          for(var cat in DATA){
-            DATA[cat].forEach(function(p){
-              if(s.discOverrides[p.ref]!=null) p.disc=s.discOverrides[p.ref];
-            });
-          }
-        }
       }
       if(cb) cb();
     })
@@ -461,7 +431,7 @@ function saveHidden(arr){
 }
 function isHidden(ref){return getHidden().includes(ref);}
 function toggleHidden(ref){const h=getHidden();const i=h.indexOf(ref);if(i>=0)h.splice(i,1);else h.push(ref);saveHidden(h);}
-function krw(msrp,cat,itemDisc){const c=cfg();const d=(itemDisc!=null&&itemDisc>0)?itemDisc:((c.disc&&c.disc[cat]!=null)?c.disc[cat]:0);return Math.round(msrp*c.rate*(1-d/100)/100)*100;}
+function krw(msrp,cat){const c=cfg();const d=(c.disc&&c.disc[cat]!=null)?c.disc[cat]:0;return Math.round(msrp*c.rate*(1-d/100)/100)*100;}
 function fw(n){return n?('₩'+Number(n).toLocaleString('ko-KR')):null;}
 function bCls(st,sk){
   if(sk==='N')return 'b-out';
@@ -496,10 +466,9 @@ function imgEl(img,name){
   if(img)return '<img class="pimg" src="'+img+'" alt="'+name+'" loading="lazy">';
   return '<div class="pimg-ph">'+name.slice(0,18)+'</div>';
 }
-function priceHtml(msrp,cat,itemDisc){
+function priceHtml(msrp,cat){
   var c=cfg();
-  // 상품별 할인율 우선, 없으면 카테고리 할인율
-  var d=(itemDisc!=null&&itemDisc>0)?itemDisc:((c.disc&&c.disc[cat]!=null)?c.disc[cat]:0);
+  var d=(c.disc&&c.disc[cat]!=null)?c.disc[cat]:0;
   if(!msrp||msrp<=0)return '<div class="no-price">가격 문의</div>';
   var krwFull=Math.round(msrp*c.rate/100)*100;
   var krwDisc=Math.round(msrp*c.rate*(1-d/100)/100)*100;
@@ -531,8 +500,7 @@ function renderCat(cat){
     return '<div class="pcard'+(oos?' oos':'')+'">'+
       imgEl(p.img,p.name)+
       '<div class="pinfo">'+
-        '<div class="pref">'+p.ref+'</div>'+
-        '<div class="pname">'+p.name+'</div>'+
+                '<div class="pname">'+p.name+'</div>'+
         priceHtml(p.msrp,cat)+
         '<span class="bdg '+bCls(p.status,p.stock)+'">'+bTxt(p.status,p.stock)+'</span>'+
         '<div class="qty-row">'+
@@ -553,9 +521,8 @@ function renderShoes(){
     return '<div class="pcard'+(oos?' oos':'')+(p.hidden?' hidden-item':'')+'" data-ref="'+p.ref+'">'+
       imgEl(p.img,p.name)+
       '<div class="pinfo">'+
-        '<div class="pref">'+p.ref+'</div>'+
-        '<div class="pname">'+p.name+'</div>'+
-        priceHtml(p.msrp,'shoes',p.disc)+
+                '<div class="pname">'+p.name+'</div>'+
+        priceHtml(p.msrp,'shoes')+
         (oos?'<div class="bdg oos-bdg">OUT OF STOCK</div>':'<div class="bdg avail-bdg">AVAILABLE</div>')+
       '</div>'+
       '<div class="pfoot">'+
@@ -587,10 +554,9 @@ function renderTextile(){
     return '<div class="pcard'+(hasStock?'':' oos')+'">'+
       imgEl(p.img,p.name)+
       '<div class="pinfo">'+
-        '<div class="pref">'+p.ref+'</div>'+
-        '<div class="pseries">'+p.series+'</div>'+
+                '<div class="pseries">'+p.series+'</div>'+
         '<div class="pname">'+p.name+'</div>'+
-        priceHtml(p.msrp,'textile',p.disc)+
+        priceHtml(p.msrp,'textile')+
         '<span class="bdg '+(hasStock?'b-ok':'b-out')+'">'+(hasStock?'AVAILABLE':'OUT OF STOCK')+'</span>'+
       '</div>'+
       (p.sizes&&p.sizes.length>0?'<div class="sz-grid" style="padding:0 14px 14px">'+szHtml+'</div>':'')+
@@ -744,7 +710,6 @@ function showAtab(id,tab){
   if(id==='visibility')renderHideList();
   if(id==='images')renderImgList();
   if(id==='names')renderNameList();
-  if(id==='itemdisc')renderDiscList();
 }
 function filterHide(cat,btn){
   hideFilterCat=cat;
@@ -936,59 +901,6 @@ function resetName(btn){
   renderAll();
   renderNameList();
   showToast('초기화됨: '+ref);
-}
-
-
-// ── 상품별 할인율 관리 ──────────────────────────────────
-function renderDiscList(){
-  var q=(document.getElementById('discSearch').value||'').toLowerCase();
-  var cat=document.getElementById('discCatFilter').value;
-  var items=allItems();
-  if(cat!=='all') items=items.filter(function(p){return p.cat===cat;});
-  if(q) items=items.filter(function(p){return p.name.toLowerCase().includes(q)||p.ref.toLowerCase().includes(q);});
-  var html='';
-  items.slice(0,200).forEach(function(p){
-    var catDisc=cfg().disc&&cfg().disc[p.cat]?cfg().disc[p.cat]:0;
-    var active=p.disc>0;
-    html+='<div style="display:flex;gap:8px;align-items:center;padding:6px 8px;background:var(--card);border-radius:4px;border:1px solid '+(active?'var(--acc)':'var(--bdr)')+'" data-ref="'+p.ref+'">'+
-      '<div style="flex:1;min-width:0">'+
-        '<div style="font-size:10px;color:'+(active?'var(--acc)':'var(--dim)')+';margin-bottom:1px">'+p.ref+(active?' <span style="font-size:9px;color:#4caf50">★ 개별설정</span>':'')+'</div>'+
-        '<div style="font-size:12px;color:var(--txt)">'+p.name+'</div>'+
-        '<div style="font-size:10px;color:#444">카테고리 기본: '+catDisc+'%</div>'+
-      '</div>'+
-      '<div style="display:flex;align-items:center;gap:4px">'+
-        '<input type="number" min="0" max="99" step="1" class="ainp" style="width:60px;font-size:13px;padding:4px 6px;text-align:center" value="'+p.disc+'" data-ref="'+p.ref+'" placeholder="0">'+
-        '<span style="font-size:11px;color:var(--dim)">%</span>'+
-      '</div>'+
-    '</div>';
-  });
-  document.getElementById('discList').innerHTML=html;
-}
-
-function saveAllDiscounts(){
-  // 화면의 모든 입력값 수집해서 DATA에 반영
-  var inputs=document.querySelectorAll('#discList input[data-ref]');
-  var changed=0;
-  inputs.forEach(function(inp){
-    var ref=inp.getAttribute('data-ref');
-    var val=parseInt(inp.value)||0;
-    for(var cat in DATA){
-      DATA[cat].forEach(function(p){
-        if(p.ref===ref){ p.disc=val; changed++; }
-      });
-    }
-  });
-  // settings에 disc overrides 저장
-  var discMap={};
-  for(var cat in DATA){
-    DATA[cat].forEach(function(p){if(p.disc>0)discMap[p.ref]=p.disc;});
-  }
-  var s=cfg();
-  s.discOverrides=discMap;
-  saveCfg(s);
-  renderAll();
-  renderDiscList();
-  showToast('✅ '+changed+'개 할인율 저장됨');
 }
 
 function showToast(msg){
