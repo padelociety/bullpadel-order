@@ -239,7 +239,7 @@ main{max-width:1200px;margin:0 auto;padding:32px 24px;}
             <div class="fgrp full"><label class="flbl">배송지 *</label><input class="finp" id="fa" type="text" placeholder="서울시 ..."></div>
             <div class="fgrp full"><label class="flbl">메모</label><textarea class="ftxt" id="fm" placeholder="기타 요청사항"></textarea></div>
           </div>
-          <button class="sub-btn" id="orderBtn" onclick="submitOrder()">주문서 제출하기</button>
+          <button class="sub-btn" id="orderBtn" onclick="submitOrder()">주문 제출하기</button>
         </div>
       </div>
     </div>
@@ -307,6 +307,20 @@ main{max-width:1200px;margin:0 auto;padding:32px 24px;}
               <button class="hf-btn" onclick="filterHide('textile',this)">의류</button>
               <button class="hf-btn" onclick="filterHide('hidden',this)">숨김 목록</button>
             </div>
+            <!-- 카테고리 전체 노출/숨김 -->
+            <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap;padding:8px 10px;background:#0d0d0d;border:1px solid #1e1e1e">
+              <span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--dim);align-self:center;margin-right:2px">카테고리 일괄:</span>
+              <button class="adm-btn" onclick="bulkVisibility('rackets',true)">라켓 노출</button>
+              <button class="adm-btn" style="border-color:#444;color:#666" onclick="bulkVisibility('rackets',false)">라켓 숨김</button>
+              <button class="adm-btn" onclick="bulkVisibility('shoes',true)">신발 노출</button>
+              <button class="adm-btn" style="border-color:#444;color:#666" onclick="bulkVisibility('shoes',false)">신발 숨김</button>
+              <button class="adm-btn" onclick="bulkVisibility('bags',true)">가방 노출</button>
+              <button class="adm-btn" style="border-color:#444;color:#666" onclick="bulkVisibility('bags',false)">가방 숨김</button>
+              <button class="adm-btn" onclick="bulkVisibility('accessories',true)">액세세리 노출</button>
+              <button class="adm-btn" style="border-color:#444;color:#666" onclick="bulkVisibility('accessories',false)">액세세리 숨김</button>
+              <button class="adm-btn" onclick="bulkVisibility('textile',true)">의류 노출</button>
+              <button class="adm-btn" style="border-color:#444;color:#666" onclick="bulkVisibility('textile',false)">의류 숨김</button>
+            </div>
             <input class="hide-search" id="hideSearch" type="text" placeholder="제품명 또는 REF 검색..." oninput="renderHideList()">
             <div class="hide-list" id="hideList"></div>
           </div>
@@ -320,6 +334,11 @@ main{max-width:1200px;margin:0 auto;padding:32px 24px;}
           <div class="asec">
             <div class="asec-t">기타 설정</div>
             <div class="arow"><span class="arow-lbl">수신 이메일</span><input class="finp" type="email" id="sEmail" placeholder="order@padelsociety.kr" style="max-width:240px;padding:6px 10px;"></div>
+            <div style="margin-top:12px">
+              <div class="arow-lbl" style="margin-bottom:6px">입금 계좌번호</div>
+              <input class="finp" type="text" id="sAccount" placeholder="이름 은행 000-000-000000 (예문)" style="padding:6px 10px;">
+              <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--dim);margin-top:4px">입력하면 주문 완료 화면에 표시됩니다.</div>
+            </div>
             <div style="margin-top:12px">
               <div class="arow-lbl" style="margin-bottom:6px">공지 문구</div>
               <textarea class="ftxt" id="sNotice" style="min-height:60px;" placeholder="마감일, 배송비 안내 등..."></textarea>
@@ -384,7 +403,7 @@ const ADMIN_PW = 'ps2025';
 
 // ── SETTINGS ──────────────────────────────────────────
 const SHEET_URL='https://script.google.com/macros/s/AKfycbwehEUkL4MHeVQbKwwgn_7_FMmY4h6x77Z058cyR3v211kQJmU0J6ZnDkj4zcAVDXP_/exec';
-const DEF={rate:1550,disc:{shoes:15,bags:15,accessories:10,textile:15},email:'order@padelsociety.kr',notice:''};
+const DEF={rate:1550,disc:{shoes:15,bags:15,accessories:10,textile:15},email:'order@padelsociety.kr',account:'',notice:''};
 // ── 세팅 저장소: Google Sheets ─────────────────────────
 var _cfgCache=null;
 var _hiddenCache=null;
@@ -659,10 +678,10 @@ function submitOrder(){
 
   // GET 파라메터 방식 (no-cors)
   var c=cfg();
-  var succHtml='<strong>'+nm+'</strong>님 주문이 접수되었습니다! ✅<br>담당자가 확인 후 연락드릴게요.<br><br>'+cart.length+'종 · '+fw(tot)+(c.account?'<br><br><span style="color:#f5c842;font-size:13px">토크 입금 계좌</span><br>'+c.account:'');
+  var succHtml='<strong>'+nm+'</strong>님 주문이 접수되었습니다! ✅<br>담당자가 확인 후 연락드릴게요.<br><br>'+cart.length+'종 · '+fw(tot)+(c.account?'<br><br><span style="color:#f5c842;font-size:13px">입금 계좌</span><br>'+c.account:'');
   function showSucc(){
     var b=document.getElementById('orderBtn');
-    if(b){b.disabled=false;b.innerHTML='주문서 제출하기';}
+    if(b){b.disabled=false;b.innerHTML='주문 제출하기';}
     document.getElementById('cartCnt').style.display='none';
     document.getElementById('succMsg').classList.add('on');
     document.getElementById('succDtl').innerHTML=succHtml;
@@ -703,6 +722,7 @@ function loadAdminUI(){
   document.getElementById('dAcc').value=c.disc.accessories;
   document.getElementById('dTextile').value=c.disc.textile||20;
   document.getElementById('sEmail').value=c.email||'';
+  document.getElementById('sAccount').value=c.account||'';
   document.getElementById('sNotice').value=c.notice||'';
   updatePrev();renderRacketDiscList();renderHideList();applyImgOverrides();
 }
@@ -757,6 +777,19 @@ function toggleHideItem(ref,row){
   var h=getHidden().includes(ref);
   btn.textContent=h?'숨김':'노출';
   btn.className='toggle-hide'+(h?' hiding':'');
+}
+function bulkVisibility(cat,show){
+  var h=getHidden().slice();
+  DATA[cat].forEach(function(p){
+    var i=h.indexOf(p.ref);
+    if(show){if(i>=0)h.splice(i,1);}
+    else{if(i<0)h.push(p.ref);}
+  });
+  saveHidden(h);
+  renderAll();
+  renderHideList();
+  var catName={rackets:'라켓',shoes:'신발',bags:'가방',accessories:'액세세리',textile:'의류'}[cat]||cat;
+  showToast((show?'✅ ':'😶 ')+catName+' 전체 '+(show?'노출':'숨김')+' 완료');
 }
 
 // ── IMAGE URL 관리 ────────────────────────────────────
@@ -974,6 +1007,7 @@ function saveAll(){
       textile:parseFloat(document.getElementById('dTextile').value)||0
     },
     email:document.getElementById('sEmail').value.trim(),
+    account:document.getElementById('sAccount').value.trim(),
     notice:document.getElementById('sNotice').value.trim()
   };
   saveCfg(s);
