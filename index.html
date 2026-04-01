@@ -432,11 +432,19 @@ function loadSettingsFromSheet(cb){
     .then(function(res){
       if(res.result==='success'&&res.payload&&res.payload!=='{}'){
         var s=JSON.parse(res.payload);
-        if(s.cfg) _cfgCache=Object.assign({},DEF,s.cfg,{disc:Object.assign({},DEF.disc,(s.cfg.disc||{}))});
+        if(s.cfg){
+          var savedDisc=Object.assign({},s.cfg.disc||{});
+          delete savedDisc.rackets; // 카테고리 라켓 할인 제거
+          _cfgCache=Object.assign({},DEF,s.cfg,{disc:Object.assign({},DEF.disc,savedDisc)});
+        }
         if(s.hidden) _hiddenCache=s.hidden;
         if(s.imgOverrides) _imgOverrideCache=s.imgOverrides;
         if(s.nameOverrides) _nameOverrideCache=s.nameOverrides;
-        if(s.racketDiscs){DATA.rackets.forEach(function(p){if(s.racketDiscs[p.ref]!=null)p.disc=s.racketDiscs[p.ref];});}
+        // racketDiscs 또는 이전 discOverrides 호환
+        var rdisc=s.racketDiscs||s.discOverrides||{};
+        if(Object.keys(rdisc).length){
+          DATA.rackets.forEach(function(p){if(rdisc[p.ref]!=null)p.disc=rdisc[p.ref];});
+        }
       }
       if(cb) cb();
     })
