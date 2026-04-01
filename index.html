@@ -412,7 +412,7 @@ var _imgOverrideCache=null;
 function _saveAllSettings(){
   var rd={};DATA.rackets.forEach(function(p){if(p.disc>0)rd[p.ref]=p.disc;});
   var payload=JSON.stringify({
-    cfg:_cfgCache,
+    cfg:_cfgCache||cfg(),
     hidden:_hiddenCache||[],
     imgOverrides:_imgOverrideCache||{},
     nameOverrides:_nameOverrideCache||{},
