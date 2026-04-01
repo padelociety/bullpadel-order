@@ -447,20 +447,20 @@ function loadSettingsFromSheet(cb){
 
 function cfg(){
   if(_cfgCache) return _cfgCache;
-  try{var s=JSON.parse(localStorage.getItem('nox_cfg')||'{}');return Object.assign({},DEF,s,{disc:Object.assign({},DEF.disc,s.disc||{})});}catch(e){return DEF;}
+  try{var s=JSON.parse(localStorage.getItem('bp_cfg')||'{}');return Object.assign({},DEF,s,{disc:Object.assign({},DEF.disc,s.disc||{})});}catch(e){return DEF;}
 }
 function saveCfg(s){
   _cfgCache=Object.assign({},DEF,s,{disc:Object.assign({},DEF.disc,s.disc||{})});
-  localStorage.setItem('nox_cfg',JSON.stringify(s));
+  localStorage.setItem('bp_cfg',JSON.stringify(s));
   _saveAllSettings();
 }
 function getHidden(){
   if(_hiddenCache!==null) return _hiddenCache;
-  try{return JSON.parse(localStorage.getItem('nox_hidden')||'[]');}catch(e){return [];}
+  try{return JSON.parse(localStorage.getItem('bp_hidden')||'[]');}catch(e){return [];}
 }
 function saveHidden(arr){
   _hiddenCache=arr;
-  localStorage.setItem('nox_hidden',JSON.stringify(arr));
+  localStorage.setItem('bp_hidden',JSON.stringify(arr));
   _saveAllSettings();
 }
 function isHidden(ref){return getHidden().includes(ref);}
@@ -800,11 +800,11 @@ function bulkVisibility(cat,show){
 // ── IMAGE URL 관리 ────────────────────────────────────
 function getImgOverrides(){
   if(_imgOverrideCache!==null) return _imgOverrideCache;
-  try{return JSON.parse(localStorage.getItem('nox_img_overrides')||'{}');}catch(e){return {};}
+  try{return JSON.parse(localStorage.getItem('bp_img_overrides')||'{}');}catch(e){return {};}
 }
 function saveImgOverrides(obj){
   _imgOverrideCache=obj;
-  localStorage.setItem('nox_img_overrides',JSON.stringify(obj));
+  localStorage.setItem('bp_img_overrides',JSON.stringify(obj));
   _saveAllSettings();
 }
 
@@ -885,11 +885,11 @@ var _origName={};
 
 function getNameOverrides(){
   if(_nameOverrideCache!==null) return _nameOverrideCache;
-  try{return JSON.parse(localStorage.getItem('nox_name_overrides')||'{}');}catch(e){return {};}
+  try{return JSON.parse(localStorage.getItem('bp_name_overrides')||'{}');}catch(e){return {};}
 }
 function saveNameOverrides(obj){
   _nameOverrideCache=obj;
-  localStorage.setItem('nox_name_overrides',JSON.stringify(obj));
+  localStorage.setItem('bp_name_overrides',JSON.stringify(obj));
   _saveAllSettings();
 }
 function applyNameOverrides(){
