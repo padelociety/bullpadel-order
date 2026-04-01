@@ -239,7 +239,7 @@ main{max-width:1200px;margin:0 auto;padding:32px 24px;}
             <div class="fgrp full"><label class="flbl">배송지 *</label><input class="finp" id="fa" type="text" placeholder="서울시 ..."></div>
             <div class="fgrp full"><label class="flbl">메모</label><textarea class="ftxt" id="fm" placeholder="기타 요청사항"></textarea></div>
           </div>
-          <button class="sub-btn" onclick="submitOrder()">주문 제출하기</button>
+          <button class="sub-btn" id="orderBtn" onclick="submitOrder()">주문서 제출하기</button>
         </div>
       </div>
     </div>
@@ -271,12 +271,23 @@ main{max-width:1200px;margin:0 auto;padding:32px 24px;}
           <div class="asec">
             <div class="asec-t">환율 & 카테고리별 할인율</div>
             <div class="arow"><span class="arow-lbl">EUR → KRW 환율</span><div style="display:flex;align-items:center;gap:6px"><input class="ainp" type="number" id="sRate" min="1000" max="2500" step="10" oninput="updatePrev()"><span class="aunit">원/€</span></div></div>
-            <div class="arow"><span class="arow-lbl">🎾 라켓 할인율</span><div style="display:flex;align-items:center;gap:6px"><input class="ainp" type="number" id="dRackets" min="0" max="90" oninput="updatePrev()"><span class="aunit">%</span></div></div>
             <div class="arow"><span class="arow-lbl">👟 신발 할인율</span><div style="display:flex;align-items:center;gap:6px"><input class="ainp" type="number" id="dShoes" min="0" max="90" oninput="updatePrev()"><span class="aunit">%</span></div></div>
             <div class="arow"><span class="arow-lbl">🎒 가방 할인율</span><div style="display:flex;align-items:center;gap:6px"><input class="ainp" type="number" id="dBags" min="0" max="90" oninput="updatePrev()"><span class="aunit">%</span></div></div>
-            <div class="arow"><span class="arow-lbl">⚡ 볼/액세서리 할인율</span><div style="display:flex;align-items:center;gap:6px"><input class="ainp" type="number" id="dAcc" min="0" max="90" oninput="updatePrev()"><span class="aunit">%</span></div></div>
+            <div class="arow"><span class="arow-lbl">⚡ 볼/액세세리 할인율</span><div style="display:flex;align-items:center;gap:6px"><input class="ainp" type="number" id="dAcc" min="0" max="90" oninput="updatePrev()"><span class="aunit">%</span></div></div>
             <div class="arow"><span class="arow-lbl">👕 의류 할인율</span><div style="display:flex;align-items:center;gap:6px"><input class="ainp" type="number" id="dTextile" min="0" max="90" oninput="updatePrev()"><span class="aunit">%</span></div></div>
             <div class="prev" id="prevBox"></div>
+          </div>
+          <div class="asec" style="margin-top:24px;border-top:1px solid var(--bdr);padding-top:20px">
+            <div class="asec-t">🎾 라켓 개별 할인율</div>
+            <div style="font-size:11px;color:var(--dim);margin-bottom:12px">상품별로 다르게 적용됩니다. 0이면 할인 없음.</div>
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;padding:10px 12px;background:#0d0d0d;border:1px solid #2a2a2a">
+              <span style="font-family:'DM Mono',monospace;font-size:11px;color:var(--dim);flex:1">전체 일괄 적용</span>
+              <input class="ainp" type="number" id="dRacketsAll" min="0" max="90" placeholder="%" style="width:64px">
+              <span class="aunit">%</span>
+              <button class="save-btn" style="padding:6px 16px;font-size:12px;width:auto;letter-spacing:1px" onclick="applyAllRacketDisc()">전체 적용</button>
+            </div>
+            <div id="racketDiscList" style="display:flex;flex-direction:column;gap:4px;max-height:50vh;overflow-y:auto"></div>
+            <button class="save-btn" style="margin-top:12px" onclick="saveRacketDiscs()">💾 라켓 할인율 저장</button>
           </div>
         </div>
 
@@ -373,17 +384,19 @@ const ADMIN_PW = 'ps2025';
 
 // ── SETTINGS ──────────────────────────────────────────
 const SHEET_URL='https://script.google.com/macros/s/AKfycbwehEUkL4MHeVQbKwwgn_7_FMmY4h6x77Z058cyR3v211kQJmU0J6ZnDkj4zcAVDXP_/exec';
-const DEF={rate:1550,disc:{rackets:20,shoes:15,bags:15,accessories:10,textile:15},email:'order@padelsociety.kr',notice:''};
+const DEF={rate:1550,disc:{shoes:15,bags:15,accessories:10,textile:15},email:'order@padelsociety.kr',notice:''};
 // ── 세팅 저장소: Google Sheets ─────────────────────────
 var _cfgCache=null;
 var _hiddenCache=null;
 var _imgOverrideCache=null;
 function _saveAllSettings(){
+  var rd={};DATA.rackets.forEach(function(p){if(p.disc>0)rd[p.ref]=p.disc;});
   var payload=JSON.stringify({
     cfg:_cfgCache,
     hidden:_hiddenCache||[],
     imgOverrides:_imgOverrideCache||{},
-    nameOverrides:_nameOverrideCache||{}
+    nameOverrides:_nameOverrideCache||{},
+    racketDiscs:rd
   });
   fetch(SHEET_URL,{
     method:'POST',
@@ -403,6 +416,7 @@ function loadSettingsFromSheet(cb){
         if(s.hidden) _hiddenCache=s.hidden;
         if(s.imgOverrides) _imgOverrideCache=s.imgOverrides;
         if(s.nameOverrides) _nameOverrideCache=s.nameOverrides;
+        if(s.racketDiscs){DATA.rackets.forEach(function(p){if(s.racketDiscs[p.ref]!=null)p.disc=s.racketDiscs[p.ref];});}
       }
       if(cb) cb();
     })
@@ -431,7 +445,7 @@ function saveHidden(arr){
 }
 function isHidden(ref){return getHidden().includes(ref);}
 function toggleHidden(ref){const h=getHidden();const i=h.indexOf(ref);if(i>=0)h.splice(i,1);else h.push(ref);saveHidden(h);}
-function krw(msrp,cat){const c=cfg();const d=(c.disc&&c.disc[cat]!=null)?c.disc[cat]:0;return Math.round(msrp*c.rate*(1-d/100)/100)*100;}
+function krw(msrp,cat,itemDisc){const c=cfg();const d=(itemDisc!=null&&itemDisc>0)?itemDisc:((c.disc&&c.disc[cat]!=null)?c.disc[cat]:0);return Math.round(msrp*c.rate*(1-d/100)/100)*100;}
 function fw(n){return n?('₩'+Number(n).toLocaleString('ko-KR')):null;}
 function bCls(st,sk){
   if(sk==='N')return 'b-out';
@@ -466,9 +480,9 @@ function imgEl(img,name){
   if(img)return '<img class="pimg" src="'+img+'" alt="'+name+'" loading="lazy">';
   return '<div class="pimg-ph">'+name.slice(0,18)+'</div>';
 }
-function priceHtml(msrp,cat){
+function priceHtml(msrp,cat,itemDisc){
   var c=cfg();
-  var d=(c.disc&&c.disc[cat]!=null)?c.disc[cat]:0;
+  var d=(itemDisc!=null&&itemDisc>0)?itemDisc:((c.disc&&c.disc[cat]!=null)?c.disc[cat]:0);
   if(!msrp||msrp<=0)return '<div class="no-price">가격 문의</div>';
   var krwFull=Math.round(msrp*c.rate/100)*100;
   var krwDisc=Math.round(msrp*c.rate*(1-d/100)/100)*100;
@@ -495,13 +509,13 @@ function renderCat(cat){
   document.getElementById('cnt-'+cat).textContent=visible.length+' items';
   g.innerHTML=visible.map(function(p){
     const oos=isOos(p.status,p.stock);
-    const pk=krw(p.msrp,cat);
+    const pk=krw(p.msrp,cat,cat==='rackets'?p.disc:undefined);
     const dis=oos||!pk;
     return '<div class="pcard'+(oos?' oos':'')+'">'+
       imgEl(p.img,p.name)+
       '<div class="pinfo">'+
                 '<div class="pname">'+p.name+'</div>'+
-        priceHtml(p.msrp,cat)+
+        priceHtml(p.msrp,cat,cat==='rackets'?p.disc:undefined)+
         '<span class="bdg '+bCls(p.status,p.stock)+'">'+bTxt(p.status,p.stock)+'</span>'+
         '<div class="qty-row">'+
           '<button class="add-btn"'+(dis?' disabled':'')+' onclick="addCart(\''+safeName(p.ref)+'\',\''+safeName(p.name)+'\','+( pk||0)+')">+ 담기</button>'+
@@ -648,7 +662,7 @@ function submitOrder(){
   var succHtml='<strong>'+nm+'</strong>님 주문이 접수되었습니다! ✅<br>담당자가 확인 후 연락드릴게요.<br><br>'+cart.length+'종 · '+fw(tot)+(c.account?'<br><br><span style="color:#f5c842;font-size:13px">토크 입금 계좌</span><br>'+c.account:'');
   function showSucc(){
     var b=document.getElementById('orderBtn');
-    if(b){b.disabled=false;b.innerHTML='주문 제출하기';}
+    if(b){b.disabled=false;b.innerHTML='주문서 제출하기';}
     document.getElementById('cartCnt').style.display='none';
     document.getElementById('succMsg').classList.add('on');
     document.getElementById('succDtl').innerHTML=succHtml;
@@ -684,24 +698,21 @@ function checkPw(){
 function loadAdminUI(){
   var c=cfg();
   document.getElementById('sRate').value=c.rate;
-  document.getElementById('dRackets').value=c.disc.rackets;
   document.getElementById('dShoes').value=c.disc.shoes;
   document.getElementById('dBags').value=c.disc.bags;
   document.getElementById('dAcc').value=c.disc.accessories;
   document.getElementById('dTextile').value=c.disc.textile||20;
   document.getElementById('sEmail').value=c.email||'';
   document.getElementById('sNotice').value=c.notice||'';
-  updatePrev();renderHideList();applyImgOverrides();
+  updatePrev();renderRacketDiscList();renderHideList();applyImgOverrides();
 }
 function updatePrev(){
   var rate=parseFloat(document.getElementById('sRate').value)||1550;
-  var dr=parseFloat(document.getElementById('dRackets').value)||0;
   var ds=parseFloat(document.getElementById('dShoes').value)||0;
-  var dt=parseFloat(document.getElementById('dTextile').value)||0;
-  var e1=Math.round(379.99*rate*(1-dr/100)/100)*100;
+  var db=parseFloat(document.getElementById('dBags').value)||0;
   var e2=Math.round(119.99*rate*(1-ds/100)/100)*100;
-  var e3=Math.round(89.99*rate*(1-dt/100)/100)*100;
-  document.getElementById('prevBox').innerHTML='미리보기<br>BULLPADEL 라켓 (€379.99) → <span>'+fw(e1)+'</span><br>BULLPADEL 신발 (€119.99) → <span>'+fw(e2)+'</span><br>BULLPADEL 가방 (€89.99) → <span>'+fw(e3)+'</span>';
+  var e3=Math.round(89.99*rate*(1-db/100)/100)*100;
+  document.getElementById('prevBox').innerHTML='미리보기<br>BULLPADEL 신발 (€119.99) → <span>'+fw(e2)+'</span><br>BULLPADEL 가방 (€89.99) → <span>'+fw(e3)+'</span>';
 }
 function showAtab(id,tab){
   document.querySelectorAll('.atab').forEach(function(t){t.classList.remove('on');});
@@ -903,6 +914,50 @@ function resetName(btn){
   showToast('초기화됨: '+ref);
 }
 
+// ── 라켓 개별 할인율 ꭀ리 ─────────────
+function renderRacketDiscList(){
+  var rate=parseFloat(document.getElementById('sRate').value)||cfg().rate||1550;
+  var html=DATA.rackets.map(function(p){
+    var active=p.disc>0;
+    var krwFull=Math.round(p.msrp*rate/100)*100;
+    var krwDisc=active?Math.round(p.msrp*rate*(1-p.disc/100)/100)*100:krwFull;
+    var priceInfo=active
+      ?'<span style="color:var(--acc)">'+fw(krwDisc)+'</span> <span style="color:#555;font-size:9px;text-decoration:line-through">'+fw(krwFull)+'</span>'
+      :'<span style="color:#888">'+fw(krwFull)+'</span>';
+    return '<div style="display:flex;gap:8px;align-items:center;padding:7px 10px;background:var(--card);border:1px solid '+(active?'var(--acc)':'var(--bdr)')+'" data-ref="'+p.ref+'">'
+      +'<div style="flex:1;min-width:0">'
+        +'<div style="font-size:12px;color:var(--txt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+p.name+'</div>'
+        +'<div style="font-family:\'DM Mono\',monospace;font-size:10px;color:#555">€'+p.msrp+' → '+priceInfo+'</div>'
+      +'</div>'
+      +'<div style="display:flex;align-items:center;gap:4px">'
+        +'<input type="number" min="0" max="90" step="1" class="ainp" style="width:58px;font-size:13px;padding:4px 6px;text-align:center" value="'+p.disc+'" data-ref="'+p.ref+'" placeholder="0">'
+        +'<span style="font-size:11px;color:var(--dim)">%</span>'
+      +'</div>'
+    +'</div>';
+  }).join('');
+  document.getElementById('racketDiscList').innerHTML=html;
+}
+
+function applyAllRacketDisc(){
+  var val=parseInt(document.getElementById('dRacketsAll').value)||0;
+  DATA.rackets.forEach(function(p){p.disc=val;});
+  renderRacketDiscList();
+  showToast('✅ 라켓 전체 '+val+'% 일괄 적용');
+}
+
+function saveRacketDiscs(){
+  var inputs=document.querySelectorAll('#racketDiscList input[data-ref]');
+  inputs.forEach(function(inp){
+    var ref=inp.getAttribute('data-ref');
+    var val=parseInt(inp.value)||0;
+    DATA.rackets.forEach(function(p){if(p.ref===ref)p.disc=val;});
+  });
+  _saveAllSettings();
+  renderAll();
+  renderRacketDiscList();
+  showToast('💾 라켓 할인율 저장 완료');
+}
+
 function showToast(msg){
   var t=document.getElementById('toast');
   if(!t){t=document.createElement('div');t.id='toast';t.style.cssText='position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--acc);color:#000;padding:8px 20px;border-radius:20px;font-size:13px;font-weight:700;z-index:9999;pointer-events:none;transition:opacity 0.3s';document.body.appendChild(t);}
@@ -913,7 +968,6 @@ function saveAll(){
   var s={
     rate:parseFloat(document.getElementById('sRate').value)||1550,
     disc:{
-      rackets:parseFloat(document.getElementById('dRackets').value)||0,
       shoes:parseFloat(document.getElementById('dShoes').value)||0,
       bags:parseFloat(document.getElementById('dBags').value)||0,
       accessories:parseFloat(document.getElementById('dAcc').value)||0,
