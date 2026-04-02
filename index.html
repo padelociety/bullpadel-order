@@ -161,7 +161,18 @@ main{max-width:1200px;margin:0 auto;padding:32px 24px;}
 .hide-filter{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap;}
 .hf-btn{font-family:'DM Mono',monospace;font-size:9px;padding:4px 10px;border:1px solid var(--bdr);color:var(--dim);background:none;cursor:pointer;}
 .hf-btn.on{border-color:var(--acc);color:var(--acc);}
-@media(max-width:600px){.fgrid{grid-template-columns:1fr;}.pgrid{grid-template-columns:1fr 1fr;}main{padding:16px;}}
+@media(max-width:600px){
+  .fgrid{grid-template-columns:1fr;}
+  .pgrid{grid-template-columns:1fr 1fr;}
+  main{padding:16px;}
+  header{padding:0 10px;height:48px;}
+  .logo{font-size:18px;letter-spacing:2px;}
+  .rate-disp{font-size:10px;}
+  .adm-btn{padding:4px 6px;font-size:9px;}
+  .cart-btn{padding:6px 10px;font-size:11px;gap:4px;}
+  .cart-n{width:18px;height:18px;font-size:10px;}
+  .hright{gap:6px;}
+}
 
 .price-wrap{display:flex;flex-direction:column;gap:3px;margin:6px 0 2px;}
 .price-eur{font-family:'DM Mono',monospace;font-size:11px;color:#555;}
@@ -992,7 +1003,7 @@ function renderRacketDiscList(){
     var krwFull=Math.round(p.msrp*rate/100)*100;
     var krwDisc=active?Math.round(p.msrp*rate*(1-p.disc/100)/100)*100:krwFull;
     var priceInfo=active
-      ?'<span style="color:var(--acc)">'+fw(krwDisc)+'</span> <span style="color:#555;font-size:9px;text-decoration:line-through">'+fw(krwFull)+'</span>'
+      ?fw(krwDisc)+' <span style="color:#555;font-size:9px;text-decoration:line-through">'+fw(krwFull)+'</span>'
       :'<span style="color:#888">'+fw(krwFull)+'</span>';
     return '<div style="display:flex;gap:8px;align-items:center;padding:7px 10px;background:var(--card);border:1px solid '+(active?'var(--acc)':'var(--bdr)')+'" data-ref="'+p.ref+'">'
       +'<div style="flex:1;min-width:0">'
@@ -1016,6 +1027,11 @@ function applyAllRacketDisc(){
 }
 
 function saveRacketDiscs(){
+  document.querySelectorAll('#racketDiscList input[data-msrp]').forEach(function(inp){
+    var ref=inp.getAttribute('data-msrp');
+    var val=parseFloat(inp.value)||0;
+    DATA.rackets.forEach(function(p){if(p.ref===ref)p.msrp=val;});
+  });
   var inputs=document.querySelectorAll('#racketDiscList input[data-ref]');
   inputs.forEach(function(inp){
     var ref=inp.getAttribute('data-ref');
