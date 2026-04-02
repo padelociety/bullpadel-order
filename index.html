@@ -19,6 +19,7 @@ header{position:sticky;top:0;z-index:100;background:var(--bg);border-bottom:1px 
 .logo{font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:4px;color:var(--acc);}
 .logo span{color:var(--txt);}
 .hright{display:flex;gap:12px;align-items:center;}
+.rate-disp{font-family:'DM Mono',monospace;font-size:11px;color:var(--dim);}
 .cart-btn{background:var(--acc);color:#000;border:none;padding:8px 20px;font-family:'DM Mono',monospace;font-size:13px;font-weight:500;cursor:pointer;display:flex;align-items:center;gap:8px;}
 .cart-n{background:#000;color:var(--acc);border-radius:50%;width:20px;height:20px;display:inline-flex;align-items:center;justify-content:center;font-size:11px;}
 .adm-btn{font-family:'DM Mono',monospace;font-size:10px;color:var(--dim);cursor:pointer;padding:4px 8px;border:1px solid var(--bdr);background:none;}
@@ -190,6 +191,7 @@ main{max-width:1200px;margin:0 auto;padding:32px 24px;}
 <header>
   <div class="logo">Bullpadel <span></span></div>
   <div class="hright">
+    <span class="rate-disp">₩<span id="rateDisplay">1,550</span>/€</span>
     <button class="adm-btn" onclick="openAdmin()">⚙ 관리자</button>
     <button class="cart-btn" id="cartBtn" onclick="openCart()">
       🛒 장바구니 <span class="cart-n" id="cartN">0</span>
