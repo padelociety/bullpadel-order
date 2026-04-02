@@ -458,24 +458,21 @@ function _applySettings(s){
   }
 }
 function loadSettingsFromSheet(cb){
-  var cbName='_bp_jsonp_'+Date.now();
-  var done=false;
-  window[cbName]=function(res){
-    done=true;
-    try{
-      var s=(res.payload&&typeof res.payload==='string')?JSON.parse(res.payload):res.payload;
-      if(s&&Object.keys(s).length) _applySettings(s);
-    }catch(e){}
-    delete window[cbName];
-    if(script.parentNode) script.parentNode.removeChild(script);
-    if(cb) cb();
-  };
-  var script=document.createElement('script');
-  script.src=SHEET_URL+'?callback='+cbName+'&t='+Date.now();
-  script.onerror=function(){
-    if(!done){delete window[cbName];if(cb)cb();}
-  };
-  document.head.appendChild(script);
+  fetch(SHEET_URL + '?t=' + Date.now())
+    .then(function(r){return r.json();})
+    .then(function(data){
+      if(data.result === 'success' && data.payload && data.payload !== '{}'){
+        try{
+          var s = typeof data.payload === 'string' ? JSON.parse(data.payload) : data.payload;
+          if(s && Object.keys(s).length) _applySettings(s);
+        }catch(e){console.warn('설정 파싱 오류:', e);}
+      }
+      if(cb) cb();
+    })
+    .catch(function(e){
+      console.warn('설정 불러오기 실패, 기본값 사용:', e);
+      if(cb) cb();
+    });
 }
 
 function cfg(){
