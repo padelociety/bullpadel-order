@@ -170,9 +170,22 @@ main{max-width:1200px;margin:0 auto;padding:32px 24px;}
 .price-disc-krw{font-family:'Bebas Neue',sans-serif;font-size:20px;color:#fff;}
 .no-disc-krw{font-family:'Bebas Neue',sans-serif;font-size:20px;color:#fff;}
 
+  #loadingOverlay{position:fixed;inset:0;background:var(--bg);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;transition:opacity 0.4s;}
+#loadingOverlay.hide{opacity:0;pointer-events:none;}
+.ld-logo{font-family:'Bebas Neue',sans-serif;font-size:36px;letter-spacing:6px;color:var(--acc);}
+.ld-logo span{color:var(--txt);}
+.ld-bar{width:160px;height:2px;background:#1a1a1a;border-radius:2px;overflow:hidden;}
+.ld-bar-inner{height:100%;width:30%;background:var(--acc);border-radius:2px;animation:ldslide 1s ease-in-out infinite alternate;}
+.ld-txt{font-family:'DM Mono',monospace;font-size:11px;color:var(--dim);letter-spacing:1px;}
+@keyframes ldslide{from{transform:translateX(-30%);}to{transform:translateX(320%);}}
   </style>
 </head>
 <body>
+<div id="loadingOverlay">
+  <div class="ld-logo">BULL<span>PADEL</span></div>
+  <div class="ld-bar"><div class="ld-bar-inner"></div></div>
+  <div class="ld-txt">가격 정보 불러오는 중...</div>
+</div>
 
 <header>
   <div class="logo">Bullpadel <span></span></div>
@@ -1342,6 +1355,7 @@ var _origImg={};
 // 페이지 로드 시 Google Sheets에서 세팅 불러온 뒤 렌더링
 // 세팅 로드 → 환율 바 → 렌더
 loadSettingsFromSheet(function(){
+  var ov=document.getElementById('loadingOverlay');if(ov){ov.classList.add('hide');setTimeout(function(){ov.style.display='none';},400);}
   applyImgOverrides();
   applyNameOverrides();
   var rate=cfg().rate||1550;
